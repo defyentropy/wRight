@@ -1,3 +1,13 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer utilities {
+  .paperDone {
+    @apply bg-gradient-to-tr from-violet-600 to-fuchsia-500 text-white;
+  }
+
+  .paperNotDone {
+    @apply border-gray-400;
+  }
+}

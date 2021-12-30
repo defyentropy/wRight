@@ -4,9 +4,9 @@
   >
     <div>
       <p
-        class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-violet-700 to-fuchsia-500"
+        class="m-1 text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-violet-700 to-fuchsia-500"
       >
-        wRight
+        <router-link to="/dashboard"> wRight </router-link>
       </p>
     </div>
 
