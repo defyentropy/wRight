@@ -1,5 +1,5 @@
 <template>
-  <div v-if="store.state.user">
+  <div class="p-2" v-if="store.state.user">
     <h1
       class="mt-2 mb-2 bg-gradient-to-br text-transparent from-violet-700 to-fuchsia-500 bg-clip-text text-3xl font-bold text-center"
     >
@@ -23,7 +23,7 @@
       {{ error }}
     </p>
 
-    <div class="mx-auto max-w-sm p-4 grid grid-cols-1 gap-4" v-if="docSnap">
+    <div class="mx-auto max-w-sm grid grid-cols-1 gap-4 mb-8" v-if="docSnap">
       <div
         class="w-full rounded-md font-medium fill-white border-2 p-4 flex justify-between items-center"
         :class="{ paperDone: docSnap.completedPapers.includes(paper) }"

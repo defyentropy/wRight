@@ -35,11 +35,14 @@
 <script setup>
 import { computed } from "vue";
 import { useStore } from "vuex";
+import { useRouter } from "vue-router";
 
 const store = useStore();
 const user = computed(() => store.state.user);
+const router = useRouter();
 
-const handleLogout = () => {
-  store.dispatch("logout");
+const handleLogout = async () => {
+  await store.dispatch("logout");
+  router.push("/auth/login");
 };
 </script>

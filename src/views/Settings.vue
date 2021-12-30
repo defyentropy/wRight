@@ -1,5 +1,5 @@
 <template>
-  <div v-if="user">
+  <div class="p-2" v-if="user">
     <!-- Page title -->
     <h1
       class="mt-2 mb-4 bg-gradient-to-br text-transparent from-violet-700 to-fuchsia-500 bg-clip-text text-3xl font-bold text-center"
@@ -10,9 +10,16 @@
       <router-link to="/dashboard"> <Back /> </router-link>
     </div>
 
+    <p
+      v-if="error"
+      class="text-center font-medium p-1 text-white bg-red-400 rounded mb-4 text-sm"
+    >
+      {{ error }}
+    </p>
+
     <!-- Settinsg card -->
     <div
-      class="max-w-sm rounded border-t-4 border-violet-700 shadow-md mx-auto p-4 grid grid-cols-2 gap-2"
+      class="max-w-sm rounded border-t-4 border-violet-700 shadow-md mx-auto p-4 grid grid-cols-2 gap-2 mb-8"
     >
       <!-- Profile picture -->
       <div class="col-span-1">
@@ -21,7 +28,7 @@
         </div>
         <div v-else>
           <div
-            class="rounded-full h-32 p-1 aspect-square bg-violet-700 text-white font-bold text-6xl flex justify-center items-center"
+            class="rounded-full h-24 md:h-32 aspect-square bg-violet-700 text-white font-bold text-6xl flex justify-center items-center"
           >
             {{ user.email[0].toUpperCase() }}
           </div>
@@ -30,7 +37,7 @@
       <!-- Email and verified status -->
       <div class="col-span-1 mr-auto self-center">
         <h3 class="font-medium text-violet-600">Email</h3>
-        <p class="mb-4">{{ user.email }}</p>
+        <p class="w-32 md:w-48 mb-4 truncate">{{ user.email }}</p>
         <h3 class="font-medium text-violet-600">Email verified?</h3>
         <p>
           <Check class="fill-green-500" v-if="user.emailVerified"></Check>
@@ -72,8 +79,6 @@
             Add subject
           </button>
 
-          <p>{{ error }}</p>
-
           <datalist id="subjects">
             <option
               v-for="subject in availableSubjects"
@@ -96,11 +101,19 @@ import Cross from "../components/icons/Cross.vue";
 import { subjectsList } from "../firebase/subjectsList.json";
 import subjectComps from "../firebase/subjects.json";
 import Back from "../components/icons/Back.vue";
+import { useRouter } from "vue-router";
 
 const error = ref(null);
 const userData = ref(null);
 const store = useStore();
 const user = ref(null);
+const router = useRouter();
+const newSubject = ref(null);
+
+const redirect = () => {
+  router.push("/auth/login");
+};
+
 let availableSubjects = computed(() => {
   if (userData) {
     return subjectsList.filter(
@@ -109,22 +122,25 @@ let availableSubjects = computed(() => {
     );
   }
 });
-const newSubject = ref(null);
 
 const stop = watchEffect(async () => {
   if (store.state.authIsReady) {
-    user.value = store.state.user;
-    // fetch user data
-    const docRef = doc(db, "users", store.state.user.uid);
-    const snap = await getDoc(docRef);
+    if (store.state.user) {
+      user.value = store.state.user;
+      // fetch user data
+      const docRef = doc(db, "users", store.state.user.uid);
+      const snap = await getDoc(docRef);
 
-    if (!snap) {
-      error.value = "Something went wrong while fetching your data.";
+      if (!snap) {
+        error.value = "Something went wrong while fetching your data.";
+      }
+
+      userData.value = snap.data();
+
+      stop();
+    } else {
+      redirect();
     }
-
-    userData.value = snap.data();
-
-    stop();
   }
 });
 

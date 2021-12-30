@@ -1,5 +1,6 @@
 import { createStore } from "vuex";
 import { auth, db } from "../firebase/config";
+import subjectComps from "../firebase/subjects.json";
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
@@ -22,7 +23,7 @@ const store = createStore({
     },
   },
   actions: {
-    async signup(context, { email, password, grade }) {
+    async signup(context, { email, password, subjects }) {
       const authRes = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -32,15 +33,16 @@ const store = createStore({
       if (authRes) {
         context.commit("setUser", authRes.user);
 
-        const docData = {
-          grade,
-        };
-
-        const dbRes = await setDoc(doc(db, "users", authRes.user.uid), docData);
-
-        if (!dbRes) {
-          throw new Error("Could not initialize user data");
+        const docData = { subjects: {} };
+        for (let subject of subjects) {
+          docData.subjects[subject.slice(0, 4)] = {
+            name: subject.slice(5),
+            completedPapers: [],
+            completed: {},
+            components: subjectComps[subject.slice(0, 4)],
+          };
         }
+        await setDoc(doc(db, "users", authRes.user.uid), docData);
       } else {
         throw new Error("Could not sign user up");
       }

@@ -1,6 +1,6 @@
 <template>
   <form
-    class="mx-auto mt-4 max-w-sm rounded-md p-4 bg-gradient-to-br from-violet-700 to-fuchsia-700"
+    class="mx-4 sm:mx-auto mt-4 max-w-sm rounded-md p-4 bg-gradient-to-br from-violet-700 to-fuchsia-700"
   >
     <h1 class="text-center font-bold text-3xl text-white mb-4">Login</h1>
 
