@@ -1,11 +1,11 @@
 <template>
-  <div class="p-2" v-if="docSnap">
+  <div class="p-2" v-if="store.state.user">
     <h1 class="mt-2 mb-4 text-center">
       <span class="text-gray-400 text-sm">Settings for</span> <br />
       <span
         class="bg-gradient-to-br text-transparent from-violet-700 to-fuchsia-500 bg-clip-text text-3xl font-bold"
       >
-        {{ id }} {{ docSnap ? docSnap.name : null }}
+        {{ id }} {{ subData ? subData.name : null }}
       </span>
     </h1>
 
@@ -21,7 +21,7 @@
     </p>
 
     <div
-      v-if="docSnap"
+      v-if="subData"
       class="flex flex-col items-center p-4 rounded border-t-4 border-t-violet-700 shadow-md mx-auto max-w-md mb-8"
     >
       <h2 class="text-violet-700 font-semibold text-2xl mb-4 text-center">
@@ -76,38 +76,43 @@ import { useRoute, useRouter } from "vue-router";
 import { useStore } from "vuex";
 import { ref, watchEffect, computed } from "vue";
 import { db } from "../firebase/config";
-import { doc, getDoc, runTransaction } from "firebase/firestore";
+import { doc, getDoc, runTransaction, deleteDoc } from "firebase/firestore";
 import subjects from "../firebase/subjects.json";
 import BackIcon from "../components/icons/Back.vue";
 
 const route = useRoute();
 const id = route.params.id;
 const store = useStore();
-const docSnap = ref(null);
+const router = useRouter();
+// app state
+const subData = ref(null);
 const error = ref(null);
 const availableComponents = subjects[id];
 const selectedComponents = ref([]);
-const router = useRouter();
-const redirect = () => {
-  router.push("/auth/login");
-};
 const keyphrase = ref("");
 
 const stop = watchEffect(async () => {
   if (store.state.authIsReady) {
     if (store.state.user) {
-      const docRef = doc(db, "users", store.state.user.uid);
-      const snap = await getDoc(docRef);
+      try {
+        const docRef = doc(db, "users", store.state.user.uid, "subjects", id);
+        let snap = await getDoc(docRef);
 
-      if (!snap) {
-        error.value = "Oh snap! Something went wrong while fetching your data.";
-      } else {
-        docSnap.value = snap.data().subjects[id];
-        selectedComponents.value = docSnap.value.components.slice();
+        if (!snap) {
+          throw new Error(
+            "Oh snap! Something went wrong while fetching your data."
+          );
+        }
+
+        subData.value = snap.data();
+        selectedComponents.value = subData.value.components.slice();
+
+        stop();
+      } catch (err) {
+        error.value = err;
       }
-      stop();
     } else {
-      redirect();
+      router.push("/auth/login");
     }
   }
 });
@@ -115,7 +120,7 @@ const stop = watchEffect(async () => {
 const changed = computed(() => {
   return (
     selectedComponents.value.sort().toString() !==
-    docSnap.value.components.sort().toString()
+    subData.value.components.sort().toString()
   );
 });
 
@@ -123,19 +128,19 @@ const updateComps = async () => {
   if (changed) {
     try {
       await runTransaction(db, async (transaction) => {
-        const docRef = doc(db, "users", store.state.user.uid);
-        let currentSub = await transaction.get(docRef);
+        const docRef = doc(db, "users", store.state.user.uid, "subjects", id);
+        let dbSubData = await transaction.get(docRef);
 
-        if (!currentSub) {
+        if (!dbSubData) {
           throw new Error("Couldn't fetch data");
         }
 
-        currentSub = currentSub.data().subjects;
-        currentSub[id].components = selectedComponents.value;
+        dbSubData = dbSubData.data();
+        dbSubData.components = selectedComponents.value;
 
-        transaction.update(docRef, { subjects: currentSub });
+        transaction.update(docRef, { components: dbSubData.components });
       });
-      docSnap.value.components = selectedComponents.value.slice();
+      subData.value.components = selectedComponents.value.slice();
     } catch (err) {
       error.value = err;
     }
@@ -144,19 +149,7 @@ const updateComps = async () => {
 
 const deleteSubject = async () => {
   try {
-    await runTransaction(db, async (transaction) => {
-      const docRef = doc(db, "users", store.state.user.uid);
-      let currentDoc = await transaction.get(docRef);
-
-      if (!currentDoc) {
-        error.value = "Something went wrong.";
-      }
-
-      currentDoc = currentDoc.data().subjects;
-      delete currentDoc[id];
-
-      transaction.update(docRef, { subjects: currentDoc });
-    });
+    await deleteDoc(doc(db, "users", store.state.user.uid, "subjects", id));
     router.push("/dashboard");
   } catch (err) {
     error.value = err;

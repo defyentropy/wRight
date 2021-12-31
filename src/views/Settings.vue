@@ -6,10 +6,12 @@
     >
       Settings
     </h1>
+    <!-- Navigation -->
     <div class="mx-auto flex w-24 justify-evenly mb-4">
       <router-link to="/dashboard"> <Back /> </router-link>
     </div>
 
+    <!-- Error message -->
     <p
       v-if="error"
       class="text-center font-medium p-1 text-white bg-red-400 rounded mb-4 text-sm"
@@ -17,7 +19,7 @@
       {{ error }}
     </p>
 
-    <!-- Settinsg card -->
+    <!-- Settings card -->
     <div
       class="max-w-sm rounded border-t-4 border-violet-700 shadow-md mx-auto p-4 grid grid-cols-2 gap-2 mb-8"
     >
@@ -53,9 +55,9 @@
         <ul class="mb-8">
           <li
             class="p-1 rounded-md text-center border border-violet-700 w-48 mx-auto mb-2"
-            v-for="subject in Object.keys(userData.subjects)"
+            v-for="subject in Object.keys(userData)"
           >
-            {{ userData.subjects[subject].name }}
+            {{ userData[subject].name }}
           </li>
         </ul>
         <!-- New subject -->
@@ -94,7 +96,7 @@
 <script setup>
 import { useStore } from "vuex";
 import { db } from "../firebase/config";
-import { doc, getDoc, runTransaction } from "firebase/firestore";
+import { collection, doc, setDoc, getDocs, query } from "firebase/firestore";
 import { watchEffect, ref, computed } from "vue";
 import Check from "../components/icons/Check.vue";
 import Cross from "../components/icons/Cross.vue";
@@ -103,22 +105,17 @@ import subjectComps from "../firebase/subjects.json";
 import Back from "../components/icons/Back.vue";
 import { useRouter } from "vue-router";
 
-const error = ref(null);
-const userData = ref(null);
+const error = ref("");
+const userData = ref({});
 const store = useStore();
 const user = ref(null);
 const router = useRouter();
 const newSubject = ref(null);
 
-const redirect = () => {
-  router.push("/auth/login");
-};
-
 let availableSubjects = computed(() => {
   if (userData) {
     return subjectsList.filter(
-      (subject) =>
-        !Object.keys(userData.value.subjects).includes(subject.slice(0, 4))
+      (subject) => !Object.keys(userData.value).includes(subject.slice(0, 4))
     );
   }
 });
@@ -126,51 +123,45 @@ let availableSubjects = computed(() => {
 const stop = watchEffect(async () => {
   if (store.state.authIsReady) {
     if (store.state.user) {
-      user.value = store.state.user;
-      // fetch user data
-      const docRef = doc(db, "users", store.state.user.uid);
-      const snap = await getDoc(docRef);
+      try {
+        user.value = store.state.user;
+        // fetch user data
+        const subCollection = collection(
+          db,
+          "users",
+          user.value.uid,
+          "subjects"
+        );
+        let snap = await getDocs(query(subCollection));
 
-      if (!snap) {
-        error.value = "Something went wrong while fetching your data.";
+        snap.forEach((sub) => {
+          userData.value[sub.id] = sub.data();
+        });
+
+        stop();
+      } catch (err) {
+        error.value = err;
       }
-
-      userData.value = snap.data();
-
-      stop();
     } else {
-      redirect();
+      router.push("/auth/login");
     }
   }
 });
 
 const addNewSubject = async () => {
   let code = newSubject.value.slice(0, 4);
+  let newSubData = {
+    name: newSubject.value.slice(5),
+    components: subjectComps[code],
+    completedPapers: [],
+    completed: {},
+  };
   try {
-    await runTransaction(db, async (transaction) => {
-      const docRef = doc(db, "users", store.state.user.uid);
-      let currentDoc = await transaction.get(docRef);
-
-      if (!currentDoc) {
-        error.value = "Something went wrong";
-      }
-
-      currentDoc = currentDoc.data().subjects;
-      currentDoc[code] = {
-        name: newSubject.value.slice(5),
-        components: subjectComps[code],
-        completedPapers: [],
-        completed: {},
-      };
-      transaction.update(docRef, { subjects: currentDoc });
-    });
-    // update application state
-    userData.value.subjects[code] = {
-      name: newSubject.value.slice(5),
-      components: subjectComps[code],
-      completedPapers: [],
-      completed: {},
-    };
+    await setDoc(
+      doc(db, "users", user.value.uid, "subjects", code),
+      newSubData
+    );
+    userData.value[code] = newSubData;
   } catch (err) {
     error.value = err;
   }
