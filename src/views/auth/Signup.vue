@@ -26,44 +26,32 @@
       />
     </div>
 
-    <hr class="text-white mt-8 mb-4" />
-
-    <!-- Subjects field -->
-    <div class="mb-16">
-      <h2 class="text-white font-bold text-center mb-2 text-2xl">
-        Chosen subjects
-      </h2>
-      <ul class="flex flex-col items-center mb-8">
-        <li class="m-1 text-white" v-for="subject in subjectChoices">
-          {{ subject }}
-        </li>
-      </ul>
-
-      <p class="text-sm text-white text-center mb-2 w-60 mx-auto">
-        Search for your subjects below and click Add to add it to your choices
+    <!-- First subject field -->
+    <div class="flex flex-col items-center mb-8" v-if="subjects">
+      <p class="text-white font-medium mb-2 w-full text-left">Subjects</p>
+      <p class="text-sm mb-2 text-white">
+        Choose a subject to get started. You can always add more later.
       </p>
       <input
-        class="p-2 rounded block mx-auto mb-4"
-        type="text"
+        class="p-4 rounded-md outline-none w-full"
         list="subjects"
-        v-model="toBeAdded"
+        name="firstSub"
+        id="firstSubt"
+        v-model="firstSub"
       />
-      <button
-        class="border-2 border-white transition-all p-2 rounded text-white cursor-pointer hover:shadow-lg block mx-auto font-medium w-24"
-        @click.prevent="addSubject"
-      >
-        Add
-      </button>
+
       <datalist id="subjects">
         <option v-for="subject in subjects" :value="subject"></option>
       </datalist>
+
+      {{ firstSub }}
     </div>
 
     <button
       class="p-2 mb-4 bg-white text-purple-600 font-medium text-lg rounded w-full"
       type="submit"
       @click.prevent="handleSignUp"
-      :disabled="loading"
+      :disabled="loading || dbError"
     >
       Get started
     </button>
@@ -78,20 +66,40 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import { useStore } from "vuex";
 import { useRouter } from "vue-router";
-import { subjectsList as subjects } from "../../firebase/subjectsList.json";
+import { getDoc, doc } from "firebase/firestore";
+import { db } from "../../firebase/config";
 
 const email = ref("");
 const password = ref("");
 const loading = ref(false);
 const error = ref("");
-const subjectChoices = ref([]);
-const toBeAdded = ref("");
+const dbError = ref(null);
+const firstSub = ref("");
+let subjects = ref([]);
 
 const store = useStore();
 const router = useRouter();
+
+onMounted(async () => {
+  try {
+    let snap = await getDoc(doc(db, "public", "subjectsList"));
+
+    if (!(snap && snap.data())) {
+      throw new Error("Couldn't fetch data");
+    }
+
+    snap = snap.data();
+
+    for (let sub of Object.keys(snap)) {
+      subjects.value.push(`${sub}/${snap[sub].name}`);
+    }
+  } catch (err) {
+    dbError.value = err;
+  }
+});
 
 const handleSignUp = async () => {
   try {
@@ -99,23 +107,16 @@ const handleSignUp = async () => {
     await store.dispatch("signup", {
       email: email.value,
       password: password.value,
-      subjects: subjectChoices.value,
+      firstSub: firstSub.value,
     });
     router.push({ name: "Dashboard" });
   } catch (err) {
-    error.value = err.message;
+    if (err.code === "unavailable") {
+      error.value = "No internet connection.";
+    } else {
+      error.value = err.message;
+    }
     loading.value = false;
-  }
-};
-
-const addSubject = () => {
-  if (
-    toBeAdded.value &&
-    !subjectChoices.value.includes(toBeAdded.value) &&
-    subjects.includes(toBeAdded.value)
-  ) {
-    subjectChoices.value.push(toBeAdded.value);
-    toBeAdded.value = "";
   }
 };
 </script>

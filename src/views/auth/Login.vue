@@ -27,9 +27,10 @@
     </div>
 
     <button
-      class="p-2 mb-4 bg-white text-purple-600 font-medium text-lg rounded w-full"
+      class="disabled:text-gray-500 disabled:cursor-default p-2 mb-4 bg-white text-purple-600 font-medium text-lg rounded w-full"
       type="submit"
       @click.prevent="handleLogin"
+      :disabled="loading"
     >
       Login
     </button>
@@ -51,19 +52,27 @@ import { useRouter } from "vue-router";
 const email = ref("");
 const password = ref("");
 const error = ref("");
+const loading = ref(false);
 
 const store = useStore();
 const router = useRouter();
 
 const handleLogin = async () => {
   try {
+    loading.value = true;
+    error.value = "";
     await store.dispatch("login", {
       email: email.value,
       password: password.value,
     });
     router.push({ name: "Dashboard" });
   } catch (err) {
-    error.value = err.message;
+    if (err.code === "unavailable") {
+      error.value = "No internet connection.";
+    } else {
+      error.value = err.message;
+    }
+    loading.value = false;
   }
 };
 </script>

@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA7s1lDgL9ayvqnQgcZZ3OwBM15yzhf6tY",
@@ -15,5 +15,16 @@ initializeApp(firebaseConfig);
 
 const auth = getAuth();
 const db = getFirestore();
+// enableIndexedDbPersistence(db).catch((err) => {
+//   if (err.code === "failed-precondition") {
+//     console.log(
+//       "Please have only one wRight tab opened at once for offline caching to work."
+//     );
+//   } else if (err.code === "unimplemented") {
+//     console.log(
+//       "Looks like your browser doesn't support offline caching. You'll only be able to use wRight with an internet connection."
+//     );
+//   }
+// });
 
 export { auth, db };

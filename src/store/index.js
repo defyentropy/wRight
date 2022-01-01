@@ -23,7 +23,8 @@ const store = createStore({
     },
   },
   actions: {
-    async signup(context, { email, password, subjects }) {
+    // Signup functionality
+    async signup(context, { email, password, firstSub }) {
       const authRes = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -33,20 +34,25 @@ const store = createStore({
       if (authRes) {
         context.commit("setUser", authRes.user);
 
-        const docData = { subjects: {} };
-        for (let subject of subjects) {
-          docData.subjects[subject.slice(0, 4)] = {
-            name: subject.slice(5),
-            completedPapers: [],
-            completed: {},
-            components: subjectComps[subject.slice(0, 4)],
-          };
-        }
-        await setDoc(doc(db, "users", authRes.user.uid), docData);
+        // Create first document
+        const docRef = doc(
+          db,
+          "users",
+          store.state.user.uid,
+          "subjects",
+          firstSub.slice(0, 4)
+        );
+        await setDoc(docRef, {
+          name: firstSub.slice(5),
+          completed: {},
+          completedSubjects: [],
+          components: subjectComps[firstSub.slice(0, 4)],
+        });
       } else {
         throw new Error("Could not sign user up");
       }
     },
+    // Login functionality
     async login(context, { email, password }) {
       const res = await signInWithEmailAndPassword(auth, email, password);
 
@@ -56,6 +62,7 @@ const store = createStore({
         throw new Error("Could not log user in.");
       }
     },
+    // Logout functionality
     async logout(context) {
       await signOut(auth);
       context.commit("setUser", null);
