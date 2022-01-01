@@ -34,12 +34,12 @@
       >
         <div
           class="h-2 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500"
-          :style="{ width: subData.width }"
+          :style="{ width: width }"
         ></div>
       </div>
       <p class="text-center text-gray-500 text-sm font-medium mb-8">
         {{ subData.completedCount }} /
-        {{ subData.components.length * 42 }} papers completed
+        {{ subData.goal * subData.components.length }} papers completed
       </p>
 
       <div class="mx-auto max-w-sm grid grid-cols-1 gap-4 mb-8 p-2">
@@ -122,18 +122,28 @@ onMounted(async () => {
     for (let comp of data.components) {
       sum += data.completed[comp] || 0;
     }
-    let width = `${Math.round((sum * 100) / (data.components.length * 42))}%`;
-
     subData.value = {
       ...data,
       completedCount: sum,
-      width,
     };
     loading.value = false;
   } catch (err) {
     loading.value = false;
     fatalError.value = err;
   }
+});
+
+const width = computed(() => {
+  if (!loading.value) {
+    let sum = 0;
+    for (let comp of subData.value.components) {
+      sum += subData.value.completed[comp] || 0;
+    }
+    return `${Math.round(
+      (sum * 100) / (subData.value.goal * subData.value.components.length)
+    )}%`;
+  }
+  return "0%";
 });
 
 const papersList = computed(() => {
@@ -148,7 +158,7 @@ const papersList = computed(() => {
 const completePaper = async (paper) => {
   try {
     const docRef = doc(db, "users", store.state.user.uid, "subjects", id);
-    let { completed, completedPapers, completedCount } = subData.value;
+    let { completed, completedPapers } = subData.value;
     completedPapers.push(paper);
     subData.value.completedCount++;
 

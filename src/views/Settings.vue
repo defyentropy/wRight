@@ -170,6 +170,7 @@ const addNewSubject = async () => {
       components: subjectsList[code].components,
       completedPapers: [],
       completed: {},
+      goal: 20,
     };
     error.value = "";
     await setDoc(

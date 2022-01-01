@@ -6,7 +6,7 @@
       <p
         class="m-1 text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-violet-700 to-fuchsia-500"
       >
-        <router-link to="/dashboard"> wRight </router-link>
+        <router-link to="/"> wRight </router-link>
       </p>
     </div>
 

@@ -5,7 +5,6 @@ import Subject from "../views/Subject.vue";
 import SubjectSettings from "../views/SubjectSettings.vue";
 import Settings from "../views/Settings.vue";
 import Login from "../views/auth/Login.vue";
-import Signup from "../views/auth/Signup.vue";
 import { getUser } from "../store";
 
 const routes = [
@@ -24,9 +23,7 @@ const routes = [
   },
   {
     path: "/auth/signup",
-    name: "Signup",
-    component: Signup,
-    meta: { requiresNoAuth: true },
+    redirect: "/auth/login",
   },
   {
     path: "/subject/:id",

@@ -50,7 +50,7 @@
           </div>
           <p class="text-sm text-gray-500 text-center">
             {{ subject.completedCount }} /
-            {{ subject.components.length * 42 }} papers completed
+            {{ subject.goal * subject.components.length }} papers completed
           </p>
         </div>
       </div>
@@ -114,7 +114,9 @@ onMounted(async () => {
         code: subId,
         completedCount: sum,
         ...data,
-        width: `${Math.round((sum * 100) / (data.components.length * 42))}%`,
+        width: `${Math.round(
+          (sum * 100) / (data.goal * data.components.length)
+        )}%`,
       });
     });
     loading.value = false;

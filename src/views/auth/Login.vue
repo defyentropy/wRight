@@ -35,13 +35,6 @@
       Login
     </button>
 
-    <p class="font-medium mb-8 text-white text-center">
-      Don't have an account?
-      <span class="underline hover:decoration-wavy"
-        ><router-link to="/auth/signup">Sign up</router-link></span
-      >
-    </p>
-
     <p
       class="bg-red-500 rounded p-1 text-sm text-white font-medium text-center"
       v-if="error"

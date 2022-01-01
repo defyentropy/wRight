@@ -49,6 +49,30 @@
           Update
         </button>
       </div>
+
+      <!-- Goal component -->
+      <div
+        class="flex flex-col items-center p-4 rounded border-t-4 border-t-violet-700 shadow-md mx-auto max-w-md mb-8"
+      >
+        <h2 class="text-violet-700 font-semibold text-2xl mb-4 text-center">
+          Goal
+        </h2>
+
+        <input
+          class="border border-violet-700 p-2 rounded outline-none focus:shadow-lg w-32 text-center"
+          v-model="newGoal"
+          inputmode="numeric"
+          type="number"
+        />
+
+        <button
+          class="transition-all disabled:text-gray-400 disabled:border-gray-300 disabled:cursor-default bg-white mt-8 mb-2 w-24 border-violet-700 border rounded text-violet-700 p-1 cursor-pointer font-semibold text-lg"
+          :disabled="newGoal === 0 || newGoal === subData.goal"
+          @click="updateGoal"
+        >
+          Update
+        </button>
+      </div>
       <!-- Delete component -->
       <div>
         <h2 class="text-2xl font-semibold text-red-600 text-center">Danger</h2>
@@ -114,6 +138,7 @@ const availableComponents = ref([]);
 const selectedComponents = ref([]);
 const keyphrase = ref("");
 const loading = ref(true);
+const newGoal = ref(0);
 
 onMounted(async () => {
   try {
@@ -129,6 +154,7 @@ onMounted(async () => {
     subData.value = snap.data();
     selectedComponents.value = subData.value.components.slice();
     availableComponents.value = subjects[id].components;
+    newGoal.value = subData.value.goal;
     loading.value = false;
   } catch (err) {
     loading.value = false;
@@ -153,6 +179,17 @@ const updateComps = async () => {
       { merge: true }
     );
     subData.value.components = selectedComponents.value;
+  } catch (err) {
+    error.value = err.message;
+  }
+};
+
+const updateGoal = async () => {
+  try {
+    error.value = "";
+    const docRef = doc(db, "users", store.state.user.uid, "subjects", id);
+    await setDoc(docRef, { goal: newGoal.value }, { merge: true });
+    subData.value.goal = newGoal.value;
   } catch (err) {
     error.value = err.message;
   }
