@@ -1,13 +1,11 @@
 import { createStore } from "vuex";
-import { auth, db } from "../firebase/config";
-import subjectComps from "../firebase/subjects.json";
+import { auth } from "../firebase/config";
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
 
 const store = createStore({
   state: {
@@ -24,7 +22,7 @@ const store = createStore({
   },
   actions: {
     // Signup functionality
-    async signup(context, { email, password, firstSub }) {
+    async signup(context, { email, password }) {
       const authRes = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -33,21 +31,6 @@ const store = createStore({
 
       if (authRes) {
         context.commit("setUser", authRes.user);
-
-        // Create first document
-        const docRef = doc(
-          db,
-          "users",
-          store.state.user.uid,
-          "subjects",
-          firstSub.slice(0, 4)
-        );
-        await setDoc(docRef, {
-          name: firstSub.slice(5),
-          completed: {},
-          completedSubjects: [],
-          components: subjectComps[firstSub.slice(0, 4)],
-        });
       } else {
         throw new Error("Could not sign user up");
       }
@@ -70,10 +53,19 @@ const store = createStore({
   },
 });
 
-const unsub = onAuthStateChanged(auth, (user) => {
-  store.commit("setUser", user);
-  store.commit("setAuthIsReady", true);
-  unsub();
-});
+export const getUser = () => {
+  return new Promise((resolve, reject) => {
+    const unsub = onAuthStateChanged(
+      auth,
+      (user) => {
+        unsub();
+        store.commit("setUser", user);
+        store.commit("setAuthIsReady", true);
+        resolve(user);
+      },
+      reject
+    );
+  });
+};
 
 export default store;

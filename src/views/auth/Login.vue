@@ -27,13 +27,20 @@
     </div>
 
     <button
-      class="disabled:text-gray-500 disabled:cursor-default p-2 mb-4 bg-white text-purple-600 font-medium text-lg rounded w-full"
+      class="disabled:text-gray-500 disabled:cursor-default p-2 mb-8 bg-white text-purple-600 font-medium text-lg rounded w-full"
       type="submit"
       @click.prevent="handleLogin"
       :disabled="loading"
     >
       Login
     </button>
+
+    <p class="font-medium mb-8 text-white text-center">
+      Don't have an account?
+      <span class="underline hover:decoration-wavy"
+        ><router-link to="/auth/signup">Sign up</router-link></span
+      >
+    </p>
 
     <p
       class="bg-red-500 rounded p-1 text-sm text-white font-medium text-center"
