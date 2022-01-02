@@ -37,10 +37,20 @@
           :style="{ width: width }"
         ></div>
       </div>
-      <p class="text-center text-gray-500 text-sm font-medium mb-8">
+      <p class="text-center text-gray-500 text-sm font-medium mb-4">
         {{ subData.completedCount }} /
         {{ subData.goal * subData.components.length }} papers completed
       </p>
+
+      <div class="flex justify-center mb-8">
+        <p
+          class="font-medium text-gray-500 mx-2"
+          v-for="comp in subData.components"
+        >
+          C{{ comp }}:
+          {{ subData.completed[comp] ? subData.completed[comp] : "0" }} papers
+        </p>
+      </div>
 
       <div class="mx-auto max-w-sm grid grid-cols-1 gap-4 mb-8 p-2">
         <div
